@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>꿈자람 체험 신청</title>
+    <style>
+        body { font-family: 'Malgun Gothic', sans-serif; padding: 20px; background-color: #f0f2f5; }
+        .container { max-width: 500px; margin: 0 auto; background: white; padding: 25px; border-radius: 15px; box-shadow: 0 5px 15px rgba(0,0,0,0.1); }
+        h2 { text-align: center; color: #1a73e8; }
+        .input-box { margin-bottom: 15px; }
+        label { display: block; margin-bottom: 5px; font-weight: bold; }
+        input { width: 100%; padding: 12px; border: 1px solid #ddd; border-radius: 5px; box-sizing: border-box; font-size: 16px; }
+        .program-card { display: flex; justify-content: space-between; align-items: center; padding: 15px; border: 1px solid #eee; margin-bottom: 10px; border-radius: 8px; }
+        button { padding: 10px 20px; border: none; border-radius: 5px; cursor: pointer; font-weight: bold; }
+        .btn-on { background-color: #1a73e8; color: white; }
+        .btn-off { background-color: #ccc; color: white; cursor: not-allowed; }
+        .btn-full { background-color: #e8eaed; color: #80868b; cursor: not-allowed; }
+        #status-msg { text-align: center; font-weight: bold; color: #d93025; margin-bottom: 15px; }
+    </style>
+</head>
+<body>
+<div class="container">
+    <h2>🚀 꿈자람 체험 선착순 신청</h2>
+    <div id="status-msg">잠시만 기다려주세요...</div>
+    
+    <div class="input-box">
+        <label>학번 (4자리)</label>
+        <input type="number" id="sid" placeholder="예: 1301">
+    </div>
+    <div class="input-box">
+        <label>성명</label>
+        <input type="text" id="sname" placeholder="이름을 입력하세요">
+    </div>
+
+    <hr style="border: 0.5px solid #eee; margin: 20px 0;">
+    <div id="program-list"></div>
+</div>
+
+<script>
+    // 1. 프로그램 및 정원 (문서 완벽 반영)
+    const programs = [
+        { name: "진로미술", limit: 2 }, { name: "진로음악", limit: 2 },
+        { name: "TV 뉴스제작", limit: 2 }, { name: "XR 스튜디오", limit: 2 },
+        { name: "웰타운", limit: 2 }, { name: "퓨처푸드", limit: 4 },
+        { name: "신재생에너지", limit: 2 }, { name: "유전공학", limit: 2 },
+        { name: "홈네트워크", limit: 2 }, { name: "자율주행", limit: 3 },
+        { name: "모의주식투자", limit: 2 }, { name: "창업메이커스", limit: 3 }
+    ];
+
+    // 2. 구글 폼 주소
+    const FORM_URL = "https://forms.gle/xF8mxapdJ3HfeyLh9"; 
+    
+    // 3. 신청 시간 설정 (2026년 4월 20일 17시~18시)
+    const START = new Date("2026-04-20T17:00:00").getTime();
+    const END = new Date("2026-04-20T18:00:00").getTime();
+
+    function update() {
+        const now = new Date().getTime();
+        const list = document.getElementById('program-list');
+        const msg = document.getElementById('status-msg');
+        list.innerHTML = '';
+
+        if (now < START) { msg.innerText = "📅 4월 20일 오후 5시 정각에 시작됩니다."; }
+        else if (now > END) { msg.innerText = "❌ 신청 시간이 마감되었습니다."; }
+        else { msg.innerText = "✅ 지금 신청 가능합니다! (선착순)"; }
+
+        programs.forEach(p => {
+            const count = localStorage.getItem(`c_${p.name}`) || 0;
+            const isFull = count >= p.limit;
+            const canApply = now >= START && now <= END && !isFull;
+
+            const div = document.createElement('div');
+            div.className = 'program-card';
+            div.innerHTML = `
+                <span><b>${p.name}</b> (${p.limit}명 정원)</span>
+                <button class="${isFull ? 'btn-full' : (canApply ? 'btn-on' : 'btn-off')}" 
+                        ${!canApply ? 'disabled' : ''} onclick="apply('${p.name}')">
+                    ${isFull ? '마감' : '신청'}
+                </button>`;
+            list.appendChild(div);
+        });
+    }
+
+    function apply(name) {
+        const sid = document.getElementById('sid').value;
+        const sname = document.getElementById('sname').value;
+
+        if (sid.length !== 4 || !sname) {
+            alert("학번 4자리와 이름을 먼저 입력해 주세요!");
+            return;
+        }
+
+        // 선택한 프로그램명을 명시한 알림창
+        const check = confirm(`선택하신 프로그램은 [${name}]입니다.\n\n확인을 누르면 이동하는 구글 폼에서도 반드시 [${name}]이라고 직접 입력해 주세요!`);
+        
+        if (check) {
+            let c = parseInt(localStorage.getItem(`c_${name}`) || 0);
+            localStorage.setItem(`c_${name}`, c + 1);
+            window.location.href = FORM_URL;
+        }
+    }
+
+    setInterval(update, 1000);
+    update();
+</script>
+</body>
+</html>
